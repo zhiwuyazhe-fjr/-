@@ -67,7 +67,8 @@ public:
     {
         Node * tmp;
         Node * now = head;
-        for (int i=0;i<len;i++)
+        // 一共 len+1 个结点（头结点 + len 个数据结点），都要释放
+        for (int i=0;i<=len;i++)
         {
             tmp = now->next;
             delete now;
@@ -93,7 +94,18 @@ public:
     */
     T at(int location)
     {
-        return head->value;
+        if (location < 0 || location >= len)
+        {
+            // 下标非法，简单返回头结点的值（也可以选择报错退出）
+            return head->value;
+        }
+        // 从头结点往后走 location 步，就是第 location 个元素
+        Node* now = head->next;
+        for (int i = 0; i < location; i++)
+        {
+            now = now->next;
+        }
+        return now->value;
     }
 
     /**
@@ -107,7 +119,26 @@ public:
     */
     bool insert(const T &data, int location)
     {
-        return false;
+        if (location < 0 || location > len)
+        {
+            // 位置越界，插入失败
+            return false;
+        }
+        // 找到 location 的前驱：从头结点往后走 location 步
+        Node* now = head;
+        for (int i = 0; i < location; i++)
+        {
+            now = now->next;
+        }
+        // 新结点接在前驱后面
+        now->next = new Node(data, now->next);
+        if (location == len)
+        {
+            // 插在了表尾，尾指针要跟着更新
+            last = now->next;
+        }
+        len = len + 1;
+        return true;
     }
 
     /**
@@ -120,7 +151,28 @@ public:
     */
     bool erase(int location)
     {
-        return false;
+        if (location < 0 || location >= len)
+        {
+            // 位置越界，删除失败
+            return false;
+        }
+        // 找到 location 的前驱
+        Node* now = head;
+        for (int i = 0; i < location; i++)
+        {
+            now = now->next;
+        }
+        // 前驱的 next 跳过被删结点
+        Node* tmp = now->next;
+        now->next = tmp->next;
+        if (location == len - 1)
+        {
+            // 删的是表尾，尾指针退到前驱（表删空时前驱就是头结点）
+            last = now;
+        }
+        delete tmp;
+        len = len - 1;
+        return true;
     }
 
     /**
@@ -132,7 +184,23 @@ public:
     */
     void converse()
     {
-        return;
+        if (len == 0)
+        {
+            return;
+        }
+        // 从第一个元素开始，让每个结点的 next 反过来指向前驱
+        Node* prev = NULL;
+        Node* now = head->next;
+        while (now != NULL)
+        {
+            Node* tmp = now->next;
+            now->next = prev;
+            prev = now;
+            now = tmp;
+        }
+        // 走完后 prev 是原来的表尾；原来的第一个元素变成了新表尾
+        last = head->next;
+        head->next = prev;
     }
 
     /**
@@ -143,7 +211,10 @@ public:
     void append(const T& data)
     {
         // 请直接插入表尾，注意时间复杂度要求是O(1)的，借助上面维护的last指针完成。
-        return;
+        // 新结点直接接在尾指针后面，不用遍历
+        last->next = new Node(data, NULL);
+        last = last->next;
+        len = len + 1;
     }
 
     /**
@@ -155,6 +226,19 @@ public:
     {
         // append_list.head是被拼接元素的头结点
         // 保持冷静：首先保证本链表是对的
+        if (append_list.len == 0 || &append_list == this)
+        {
+            // 空表（或自己拼自己）没有数据结点可搬
+            return;
+        }
+        // 本表尾接上对方第一个元素，本表尾指针改成对方表尾
+        last->next = append_list.head->next;
+        last = append_list.last;
+        len = len + append_list.len;
+        // 数据结点全部搬走后，对方重置为空表（头结点保留）
+        append_list.head->next = NULL;
+        append_list.last = append_list.head;
+        append_list.len = 0;
     }
 
     /**

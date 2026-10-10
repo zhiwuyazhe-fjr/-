@@ -52,7 +52,8 @@ public:
     {
         Node * tmp;
         Node * now = head;
-        for (int i=0;i<len;i++)
+        // 一共 len+1 个结点（头结点 + len 个数据结点），都要释放
+        for (int i=0;i<=len;i++)
         {
             tmp = now->next;
             delete now;
@@ -78,9 +79,19 @@ public:
     */
     T at(int location)
     {
-
+        if (location < 0 || location >= len)
+        {
+            // 下标非法，简单返回头结点的值（也可以选择报错退出）
+            return head->value;
+        }
         // 似乎照抄单链表就行呢
-        return head->value;
+        // 从头结点往后走 location 步，就是第 location 个元素
+        Node* now = head->next;
+        for (int i = 0; i < location; i++)
+        {
+            now = now->next;
+        }
+        return now->value;
     }
 
     /**
@@ -94,7 +105,23 @@ public:
     */
     bool insert(const T& data, int location)
     {
-        return false;
+        if (location < 0 || location > len)
+        {
+            // 位置越界，插入失败
+            return false;
+        }
+        // 找到 location 的前驱：从头结点往后走 location 步
+        Node* now = head;
+        for (int i = 0; i < location; i++)
+        {
+            now = now->next;
+        }
+        // 新结点挂到前驱和后继之间（循环链表，插表尾时后继就是头结点，同样适用）
+        Node* tmp = new Node(data, now, now->next);
+        now->next->pre = tmp;
+        now->next = tmp;
+        len = len + 1;
+        return true;
     }
 
     /**
@@ -107,7 +134,24 @@ public:
     */
     bool erase(int location)
     {
-        return false;
+        if (location < 0 || location >= len)
+        {
+            // 位置越界，删除失败
+            return false;
+        }
+        // 找到 location 的前驱
+        Node* now = head;
+        for (int i = 0; i < location; i++)
+        {
+            now = now->next;
+        }
+        // 前驱和后继互相指起来，被删结点从环里摘出来（删表尾时后继是头结点，同样适用）
+        Node* tmp = now->next;
+        now->next = tmp->next;
+        tmp->next->pre = now;
+        delete tmp;
+        len = len - 1;
+        return true;
     }
 
     /**
@@ -122,7 +166,17 @@ public:
         /*
             其实把所有的pre和next互换就行了，比单链表简单
          */
-        return;
+        // 连头结点在内一共 len+1 个结点，每个都把 pre 和 next 互换
+        // 注意要沿着换之前的 next 方向走，才能遍历完整个环
+        Node* now = head;
+        for (int i = 0; i <= len; i++)
+        {
+            Node* tmp = now->next;
+            Node* t = now->pre;
+            now->next = t;
+            now->pre = tmp;
+            now = tmp;
+        }
     }
 
     /**
@@ -147,7 +201,24 @@ public:
     */
     void append(LinkedList &append_list)
     {
-        return;
+        if (append_list.len == 0 || &append_list == this)
+        {
+            // 空表（或自己拼自己）没有数据结点可搬
+            return;
+        }
+        // 对方环上的首尾数据结点
+        Node* first = append_list.head->next;
+        Node* tail = append_list.head->pre;
+        // 本表尾(head->pre)接对方首结点，对方尾结点接回本表头，接成一个环
+        head->pre->next = first;
+        first->pre = head->pre;
+        tail->next = head;
+        head->pre = tail;
+        len = len + append_list.len;
+        // 数据结点全部搬走后，对方重置为空表（头结点保留）
+        append_list.head->next = append_list.head;
+        append_list.head->pre = append_list.head;
+        append_list.len = 0;
     }
 
     /**

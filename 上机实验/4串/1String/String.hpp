@@ -63,17 +63,56 @@ public:
         // 这个函数要改
         // begin是起始下标
         // count是子串长度
-        return String();
+        if (begin < 0 || begin >= len || count < 0 || count > len - begin)
+        {
+            return String();
+        }
+        char *temp = new char[count + 1];
+        for (int i = 0; i < count; i++)
+        {
+            temp[i] = a[begin + i];
+        }
+        temp[count] = '\0';
+        String result(temp);
+        delete[] temp;
+        return result;
     }
 
     void append(const String & str) // 字符串拼接
     {
-        // 这个函数要改
+        int oldLen = len;
+        int strLen = str.len;
+        int newLen = oldLen + strLen;
+        char *temp = new char[newLen + 1];
+        for (int i = 0; i < oldLen; i++)
+        {
+            temp[i] = a[i];
+        }
+        for (int i = 0; i < strLen; i++)
+        {
+            temp[oldLen + i] = str.a[i];
+        }
+        temp[newLen] = '\0';
+        delete[] a;
+        a = temp;
+        len = newLen;
     }
 
     int find(const String & str) // 查找子串
     {
         // 这个函数要改
+        for(int i = 0;i<=len-str.len;i++){
+            bool flag = true;
+            for(int j = 0;j<str.len;j++){
+                if(a[i+j] != str.a[j]){
+                    flag = false;
+                    break;
+                }
+            }
+            if(flag){
+                return i;
+            }
+        }
         return -1;
     }
 };
